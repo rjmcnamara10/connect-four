@@ -104,51 +104,93 @@ func (b *Board) CheckWinner() Space {
 	// min(rowCount, colCount) >= b.toWin
 
 	//   0 1 2 3 4 5 6
-	// 0 · · · · · · ·
-	// 1 · · · · · · ·
-	// 2 · · · · · · ·
-	// 3 · · · · · · ·
-	// 4 · · · · · · ·
 	// 5 · · · · · · ·
+	// 4 · · · · · · ·
+	// 3 · · · · · · ·
+	// 2 · · · · · · ·
+	// 1 · · · · · · ·
+	// 0 · · · · · · ·
 
-	// (0, 2) ... (3, 5) --> (0, rowCount - b.toWin) ... add one to each until
-	// (0, 1)
+	// g = b.Grid
 
-	// (0, 3)
-	// (1, 2)
-	// (2, 1)
-	// (3, 0)
-	// --
-	// (0, 4)
-	// (1, 3)
-	// (2, 2)
-	// (3, 1)
-	// (4, 0)
-	// --
-	// (0, 5)
-	// (1, 4)
-	// (2, 3)
-	// (3, 2)
-	// (4, 1)
-	// (5, 0)
-	// --
-	// (1, 5)
-	// (2, 4)
-	// (3, 3)
-	// (4, 2)
-	// (5, 1)
-	// (6, 0)
-	// --
-	// (2, 5)
-	// (3, 4)
-	// (4, 3)
-	// (5, 2)
-	// (6, 1)
-	// --
-	// (3, 5)
-	// (4, 4)
-	// (5, 3)
-	// (6, 2)
+	// Slant up diagonal
+	// g[0][2] -> g[1][3] -> g[2][4] -> g[3][5]
+	// g[0][1] -> g[1][2] -> g[2][3] -> g[3][4] -> g[4][5]
+	// g[0][0] -> g[1][1] -> g[2][2] -> g[3][3] -> g[4][4] -> g[5][5]
+	// g[1][0] -> g[2][1] -> g[3][2] -> g[4][3] -> g[5][4] -> g[6][5]
+	// g[2][0] -> g[3][1] -> g[4][2] -> g[5][3] -> g[6][4]
+	// g[3][0] -> g[4][1] -> g[5][2] -> g[6][3]
+
+	// Slant down diagonal
+	// g[0][3] -> g[1][2] -> g[2][1] -> g[3][0]
+	// g[0][4] -> g[1][3] -> g[2][2] -> g[3][1] -> g[4][0]
+	// g[0][5] -> g[1][4] -> g[2][3] -> g[3][2] -> g[4][1] -> g[5][0]
+	// g[1][5] -> g[2][4] -> g[3][3] -> g[4][2] -> g[5][1] -> g[6][0]
+	// g[2][5] -> g[3][4] -> g[4][3] -> g[5][2] -> g[6][1]
+	// g[3][5] -> g[4][4] -> g[5][3] -> g[6][2]
+
+	// Check diagonals
+	if colCount >= b.ToWin && rowCount >= b.ToWin {
+		// Slant up diagonal (/)
+		for col := 0; col <= colCount-b.ToWin; col++ {
+			for row := 0; row <= rowCount-b.ToWin; row++ {
+				if col != 0 && row != 0 {
+					continue // only start at left or bottom edge
+				}
+				curStreak := 0
+				streakSpace := Empty
+				for i := 0; col+i < colCount && row+i < rowCount; i++ {
+					fmt.Printf("g[%v][%v] -> ", col+i, row+i)
+					curSpace := b.Grid[col+i][row+i]
+					switch curSpace {
+					case Empty:
+						curStreak = 0
+						streakSpace = Empty
+					case streakSpace:
+						curStreak++
+						if curStreak >= b.ToWin {
+							return streakSpace
+						}
+					default:
+						curStreak = 1
+						streakSpace = curSpace
+					}
+				}
+				fmt.Println()
+			}
+		}
+
+		fmt.Println()
+
+		// Slant down diagonal (\)
+		for col := 0; col <= colCount-b.ToWin; col++ {
+			for row := b.ToWin - 1; row < rowCount; row++ {
+				if col != 0 && row != rowCount-1 {
+					continue // only start at left or top edge
+				}
+				curStreak := 0
+				streakSpace := Empty
+				for i := 0; col+i < colCount && row-i >= 0; i++ {
+					fmt.Printf("g[%v][%v] -> ", col+i, row-i)
+					curSpace := b.Grid[col+i][row-i]
+					switch curSpace {
+					case Empty:
+						curStreak = 0
+						streakSpace = Empty
+					case streakSpace:
+						curStreak++
+						if curStreak >= b.ToWin {
+							return streakSpace
+						}
+					default:
+						curStreak = 1
+						streakSpace = curSpace
+					}
+				}
+				fmt.Println()
+			}
+		}
+	}
 
 	// If no winner, return Empty
 	return Empty
