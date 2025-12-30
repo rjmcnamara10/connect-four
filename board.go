@@ -3,11 +3,35 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 type Board struct {
 	ToWin int
 	Grid  [][]Space
+}
+
+func (b *Board) PromptForTurn(player Space) int {
+	for {
+		input := PromptForInput(fmt.Sprintf("%v, select a column: ", player))
+
+		number, err := strconv.Atoi(input)
+		if err != nil {
+			if len(input) == 1 && input[0] >= 'A' && input[0] <= 'Z' {
+				number = int(input[0]-'A') + 10
+			} else {
+				fmt.Println("Please enter a valid column number or letter.")
+				continue
+			}
+		}
+
+		if numColumns := len(b.Grid); number < 1 || number > numColumns {
+			fmt.Println("Column out of bounds")
+			continue
+		}
+
+		return number
+	}
 }
 
 func (b *Board) DropPiece(piece Space, col int) error {
@@ -32,21 +56,26 @@ func (b *Board) Print() {
 	colCount := len(b.Grid)
 
 	// Print column numbers
-	for colNum := 1; colNum < colCount; colNum++ {
-		fmt.Printf("%v ", colNum)
+	for colNum := 1; colNum <= colCount; colNum++ {
+		var label string
+		switch {
+		case colNum <= 9:
+			label = fmt.Sprintf("%v", colNum)
+		case colNum <= 21:
+			label = string(rune('A' + (colNum - 10)))
+		default:
+			label = "?"
+		}
+		fmt.Printf("%s ", label)
 	}
-	fmt.Println(colCount)
+	fmt.Println()
 
 	// Print grid spaces
 	for row := rowCount - 1; row >= 0; row-- {
 		for col := range colCount {
-			fmt.Print(b.Grid[col][row].Symbol())
-			if col == colCount-1 {
-				fmt.Println()
-			} else {
-				fmt.Print(" ")
-			}
+			fmt.Printf("%v ", b.Grid[col][row].Symbol())
 		}
+		fmt.Println()
 	}
 
 	// Print bottom border

@@ -20,6 +20,8 @@ const (
 	maxToWin        = 20
 )
 
+var reader = bufio.NewReader(os.Stdin)
+
 // connect four idea:
 // for each turn, a player can either drop a piece in one of the existing columns,
 // create a new column on the left or right side of the board,
@@ -27,10 +29,11 @@ const (
 // at start of game, players set the board dimensions and number of pieces in a row to win.
 // or can use default values (7 columns, 6 rows, 4 pieces in a row to win).
 
-// Change double digit column numbers to capital letters
+// Todo:
+// - Move letter <-> number functionality to separate file?
+// - Allow arrow keys to add columns/row
 
-func PromptForInteger(userPrompt string, defaultInt, minInt, maxInt int) int {
-	reader := bufio.NewReader(os.Stdin)
+func PromptForInput(userPrompt string) string {
 	for {
 		fmt.Print(userPrompt)
 		input, err := reader.ReadString('\n')
@@ -39,7 +42,13 @@ func PromptForInteger(userPrompt string, defaultInt, minInt, maxInt int) int {
 			continue
 		}
 
-		input = strings.TrimSpace(input)
+		return strings.TrimSpace(input)
+	}
+}
+
+func promptForInteger(userPrompt string, defaultInt, minInt, maxInt int) int {
+	for {
+		input := PromptForInput(fmt.Sprintf("%s (default: %v): ", userPrompt, defaultInt))
 		if input == "" {
 			return defaultInt
 		}
@@ -60,9 +69,9 @@ func PromptForInteger(userPrompt string, defaultInt, minInt, maxInt int) int {
 }
 
 func main() {
-	rowCount := PromptForInteger(fmt.Sprintf("Enter the number of rows (default: %v): ", defaultRowCount), defaultRowCount, minRowCount, maxRowCount)
-	colCount := PromptForInteger(fmt.Sprintf("Enter the number of columns (default: %v): ", defaultColCount), defaultColCount, minColCount, maxColCount)
-	toWin := PromptForInteger(fmt.Sprintf("Enter the number of pieces in a row to win (default: %v): ", defaultToWin), defaultToWin, minToWin, maxToWin)
+	rowCount := promptForInteger("Enter the number of rows", defaultRowCount, minRowCount, maxRowCount)
+	colCount := promptForInteger("Enter the number of columns", defaultColCount, minColCount, maxColCount)
+	toWin := promptForInteger("Enter the number of pieces in a row to win", defaultToWin, minToWin, maxToWin)
 
 	grid := make([][]Space, colCount)
 	for col := range grid {
@@ -80,8 +89,7 @@ func main() {
 	curTurn := 0
 	for {
 		curPlayer := players[curTurn%len(players)]
-		// change to allow arrow keys to add columns/row
-		userCol := PromptForInteger(fmt.Sprintf("%v, enter a column number: ", curPlayer), 0, 1, len(board.Grid))
+		userCol := board.PromptForTurn(curPlayer)
 		if err := board.DropPiece(curPlayer, userCol-1); err != nil {
 			fmt.Printf("%v, please try again.\n", err)
 			continue
